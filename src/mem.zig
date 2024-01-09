@@ -8,7 +8,7 @@ pub fn indexOfScalar(comptime T: type, slice: []const T, value: T) ?usize {
 }
 
 pub fn indexOfScalarPos(comptime T: type, slice: []const T, start_index: usize, value: T) ?usize {
-    const vector_len: comptime_int = comptime simd.suggestVectorSize(u8).?;
+    const vector_len: comptime_int = comptime simd.suggestVectorSize(T).?;
     const V = @Vector(vector_len, T);
     const IndexInt = simd.VectorIndex(V);
 

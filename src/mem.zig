@@ -8,7 +8,8 @@ pub fn indexOfScalar(comptime T: type, slice: []const T, value: T) ?usize {
 }
 
 pub fn indexOfScalarPos(comptime T: type, slice: []const T, start_index: usize, value: T) ?usize {
-    const vector_len: comptime_int = comptime simd.suggestVectorSize(T).?;
+    const vector_len: comptime_int = comptime simd.suggestVectorSize(T) orelse
+        return std.mem.indexOfScalarPos(T, slice, start_index, value);
     const V = @Vector(vector_len, T);
     const IndexInt = simd.VectorIndex(V);
 
@@ -37,7 +38,8 @@ pub fn indexOfScalarPos(comptime T: type, slice: []const T, start_index: usize, 
 
 /// Linear search for the last index of a scalar value inside a slice.
 pub fn lastIndexOfScalar(comptime T: type, slice: []const T, value: T) ?usize {
-    const vector_len: comptime_int = comptime simd.suggestVectorSize(T).?;
+    const vector_len: comptime_int = comptime simd.suggestVectorSize(T) orelse
+        return std.mem.lastIndexOfScalar(T, slice, value);
     const V = @Vector(vector_len, T);
     const IndexInt = simd.VectorIndex(V);
 
@@ -67,13 +69,18 @@ pub fn lastIndexOfScalar(comptime T: type, slice: []const T, value: T) ?usize {
     return null;
 }
 
+export fn c_eql(a: [*:0]u8, b: [*:0]u8) callconv(.C) bool {
+    return eql(u8, a[0..std.mem.len(a)], b[0..std.mem.len(b)]);
+}
+
 /// Compares two slices and returns whether they are equal.
 pub fn eql(comptime T: type, a: []const T, b: []const T) bool {
+    const vector_len: comptime_int = comptime simd.suggestVectorSize(T) orelse
+        return std.mem.eql(T, a, b);
+    const V = @Vector(vector_len, T);
+
     if (a.len != b.len) return false;
     if (a.ptr == b.ptr) return true;
-
-    const vector_len: comptime_int = comptime simd.suggestVectorSize(T).?;
-    const V = @Vector(vector_len, T);
 
     var i: usize = 0;
     while (i < a.len) : (i += vector_len) {
